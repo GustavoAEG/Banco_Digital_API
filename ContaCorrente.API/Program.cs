@@ -1,4 +1,7 @@
 
+using ContaCorrente.Application.Services;
+using ContaCorrente.Infrastructure.Services;
+
 namespace ContaCorrente.API
 {
     public class Program
@@ -13,6 +16,7 @@ namespace ContaCorrente.API
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+            builder.Services.AddScoped<ITokenService, TokenService>();
 
             var app = builder.Build();
 
