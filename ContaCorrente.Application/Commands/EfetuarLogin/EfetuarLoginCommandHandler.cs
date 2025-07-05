@@ -1,6 +1,7 @@
 ﻿using ContaCorrente.Domain.Repositories;
 using ContaCorrente.Application.Commands;
 using MediatR;
+using ContaCorrente.Application.Services;
 
 namespace ContaCorrente.Application.Commands.EfetuarLogin;
 
@@ -18,8 +19,8 @@ public class EfetuarLoginCommandHandler : IRequestHandler<EfetuarLoginCommand, E
     public async Task<EfetuarLoginResult> Handle(EfetuarLoginCommand request, CancellationToken cancellationToken)
     {
         var conta = !string.IsNullOrWhiteSpace(request.Cpf)
-            ? await _contaRepository.ObterPorCpfAsync(request.Cpf)
-            : await _contaRepository.ObterPorNumeroContaAsync(request.NumeroConta);
+            ? await _contaRepository.ObterContaPorCpfAsync(request.Cpf)
+            : await _contaRepository.ObterContaPorNumeroAsync(request.NumeroConta.ToString());
 
         if (conta == null || conta.Senha != request.Senha) // Aqui seria melhor usar hash de senha
             throw new UnauthorizedAccessException("E-mail ou senha inválidos. Tipo de falha: USER_UNAUTHORIZED");

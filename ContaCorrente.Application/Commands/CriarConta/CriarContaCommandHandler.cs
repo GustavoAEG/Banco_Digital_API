@@ -15,10 +15,10 @@ public class CriarContaCommandHandler : IRequestHandler<CriarContaCommand, Criar
 
     public async Task<CriarContaResult> Handle(CriarContaCommand request, CancellationToken cancellationToken)
     {
-        if (CpfValido(request.Cpf))
+        if (!CpfValido(request.Cpf))
             throw new ArgumentException("CPF não pode estar em branco.");
 
-        var contaExistente = await _repository.ObterPorCpfOuNumeroAsync(request.Cpf);
+        var contaExistente = await _repository.ObterContaPorCpfAsync(request.Cpf);// passou daqui ele verifica .. variavel vem null e tal pq n tem o cpf no banco... mas ai ele nao prossegue pra if abaixo
         if (contaExistente is not null)
             throw new ArgumentException("Já existe uma conta com esse CPF.", "DUPLICATE_CPF");
 
@@ -30,6 +30,7 @@ public class CriarContaCommandHandler : IRequestHandler<CriarContaCommand, Criar
         var conta = new Domain.Entities.ContaCorrente(
             id: Guid.NewGuid(),
             numero: numeroConta,
+            cpf:request.Cpf,
             nome: request.Nome,
             senha: senhaCriptografada,
             salt: salt

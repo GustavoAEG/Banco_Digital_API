@@ -1,40 +1,41 @@
-
 using ContaCorrente.Application.Services;
+using ContaCorrente.Domain.Repositories;
+using ContaCorrente.Infrastructure.Persistence;
+using ContaCorrente.Infrastructure.Repositories;
 using ContaCorrente.Infrastructure.Services;
+using MediatR;
+using Microsoft.EntityFrameworkCore;
 
-namespace ContaCorrente.API
+var builder = WebApplication.CreateBuilder(args);
+
+// Swagger
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+// DbContext com SQLite
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// MediatR
+builder.Services.AddMediatR(cfg =>
+    cfg.RegisterServicesFromAssemblyContaining<ContaCorrente.Application.Commands.CriarConta.CriarContaCommand>());
+
+// Repositórios e serviços
+builder.Services.AddScoped<IContaCorrenteRepository, ContaCorrenteRepository>();
+builder.Services.AddScoped<ITokenService, TokenService>();
+
+builder.Services.AddHttpContextAccessor();
+
+var app = builder.Build();
+
+// Swagger UI
+if (app.Environment.IsDevelopment())
 {
-    public class Program
-    {
-        public static void Main(string[] args)
-        {
-            var builder = WebApplication.CreateBuilder(args);
-
-            // Add services to the container.
-
-            builder.Services.AddControllers();
-            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-            builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
-            builder.Services.AddScoped<ITokenService, TokenService>();
-
-            var app = builder.Build();
-
-            // Configure the HTTP request pipeline.
-            if (app.Environment.IsDevelopment())
-            {
-                app.UseSwagger();
-                app.UseSwaggerUI();
-            }
-
-            app.UseHttpsRedirection();
-
-            app.UseAuthorization();
-
-
-            app.MapControllers();
-
-            app.Run();
-        }
-    }
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
+
+app.UseAuthorization();
+app.MapControllers();
+app.Run();
