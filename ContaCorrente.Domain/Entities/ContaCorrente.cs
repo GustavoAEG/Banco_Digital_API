@@ -27,5 +27,7 @@ namespace ContaCorrente.Domain.Entities
 
         public void Ativar() => Ativo = true;
         public void Inativar() => Ativo = false;
+
+
     }
 }
