@@ -12,6 +12,12 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.WebHost.ConfigureKestrel(serverOptions =>
+{
+    serverOptions.ListenAnyIP(80);
+});
+
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
@@ -92,4 +98,10 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapControllers();
+
+app.MapGet("/", () => "API online!");
+
+app.Run();
+
 app.Run();
