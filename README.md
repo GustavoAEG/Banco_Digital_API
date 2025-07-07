@@ -32,3 +32,24 @@ API desenvolvida para simular movimentações bancárias com controle de transfe
 
 ```bash
 docker-compose up --build
+
+Acessar:
+
+bash
+Copiar
+Editar
+http://localhost:5000/swagger
+
+Executar Testes
+
+dotnet test
+
+✅ Status
+✅ Funcionalidades completas
+✅ Swagger funcionando
+✅ Testes automatizados
+✅ Docker OK
+
+Desenvolvedor
+Gustavo Gonçalves
+🔗 LinkedIn
