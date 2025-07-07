@@ -1,14 +1,10 @@
 ﻿using MediatR;
+using ContaCorrente.Application.Queries.GetSaldo;
 
 namespace ContaCorrente.Application.Queries.ConsultarSaldo
 {
-    public class ConsultarSaldoQuery : IRequest<decimal>
+    public class ConsultarSaldoQuery : IRequest<GetSaldoResult>
     {
-        public string Cpf { get; set; }
-
-        public ConsultarSaldoQuery(string cpf)
-        {
-            Cpf = cpf;
-        }
+      
     }
 }

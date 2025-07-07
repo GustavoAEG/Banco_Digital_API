@@ -88,9 +88,11 @@ public class CriarContaCommandHandler : IRequestHandler<CriarContaCommand, Criar
     private string GerarHashSenha(string senha, string salt)
     {
         using var sha256 = System.Security.Cryptography.SHA256.Create();
-        var bytes = System.Text.Encoding.UTF8.GetBytes($"{senha}:{salt}");
+        var senhaComSalt = senha + salt;
+        var bytes = System.Text.Encoding.UTF8.GetBytes(senhaComSalt);
         var hash = sha256.ComputeHash(bytes);
         return Convert.ToBase64String(hash);
     }
+
 
 }

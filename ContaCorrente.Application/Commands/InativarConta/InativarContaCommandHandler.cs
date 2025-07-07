@@ -1,15 +1,11 @@
 ﻿using ContaCorrente.Domain.Repositories;
 using MediatR;
 using Microsoft.AspNetCore.Http;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Security.Claims;
 
 namespace ContaCorrente.Application.Commands.InativarConta
 {
-    public class InativarContaCommandHandler : IRequestHandler<InativarContaCommand, Unit>
+    public class InativarContaCommandHandler : IRequestHandler<ContaCorrente.Application.Commands.InativarConta.InativarContaCommand, Unit>
     {
         private readonly IContaCorrenteRepository _contaRepository;
         private readonly IHttpContextAccessor _httpContextAccessor;
@@ -24,23 +20,27 @@ namespace ContaCorrente.Application.Commands.InativarConta
 
         public async Task<Unit> Handle(InativarContaCommand request, CancellationToken cancellationToken)
         {
-            var contaIdStr = _httpContextAccessor.HttpContext?.User.FindFirst("ContaId")?.Value;
+            var cpf = _httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier).Value;
+            if (string.IsNullOrEmpty(cpf))
+                throw new UnauthorizedAccessException("Token inválido.");
 
-            if (string.IsNullOrEmpty(contaIdStr) || !Guid.TryParse(contaIdStr, out var contaId))
-                throw new UnauthorizedAccessException("Token inválido ou expirado");
+            var conta = await _contaRepository.ObterContaPorCpfAsync(cpf)
+                        ?? throw new ArgumentException("Conta inválida.", "INVALID_ACCOUNT");
 
-            var conta = await _contaRepository.ObterPorIdAsync(contaId);
+            if (!conta.Ativo)
+                throw new ArgumentException("Conta já está inativa.", "INACTIVE_ACCOUNT");
 
-            if (conta == null)
-                throw new InvalidOperationException("Conta não encontrada. Tipo de falha: INVALID_ACCOUNT");
+            // Recria o hash da senha com o salt salvo no banco
+            using var sha256 = System.Security.Cryptography.SHA256.Create();
+            var hashBytes = System.Text.Encoding.UTF8.GetBytes(request.Senha + conta.Salt);
+            var senhaHash = Convert.ToBase64String(sha256.ComputeHash(hashBytes));
 
-            if (!conta.Senha.Equals(request.Senha))
-                throw new UnauthorizedAccessException("Senha inválida. Tipo de falha: USER_UNAUTHORIZED");
+            if (conta.Senha != senhaHash)
+                throw new UnauthorizedAccessException("Senha incorreta.");
 
-            conta.Inativar();
+            conta.Inativar(); // método na entidade
 
             await _contaRepository.AtualizarAsync(conta);
-
             return Unit.Value;
         }
     }

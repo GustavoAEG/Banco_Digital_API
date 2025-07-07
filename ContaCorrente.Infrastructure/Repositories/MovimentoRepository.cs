@@ -16,8 +16,28 @@ namespace ContaCorrente.Infrastructure.Repositories
 
         public async Task RegistrarTransferenciaAsync(Transferencia transferencia)
         {
-            await _context.Transferencias.AddAsync(transferencia);
+            _context.Transferencias.Add(transferencia);
             await _context.SaveChangesAsync();
         }
+
+        public async Task<List<Transferencia>> ObterTransferenciasPorContaAsync(Guid contaId)
+        {
+            return await _context.Transferencias
+                .Where(t => t.ContaOrigemId == contaId || t.ContaDestinoId == contaId)
+                .ToListAsync();
+        }
+        public async Task SalvarAsync(Movimento movimento)
+        {
+            _context.Movimentos.Add(movimento);
+            await _context.SaveChangesAsync();
+        }
+        public async Task<List<Movimento>> ObterMovimentosPorContaAsync(Guid contaId)
+        {
+            return await _context.Movimentos
+                .Where(m => m.ContaCorrenteId == contaId)
+                .ToListAsync();
+        }
+
+
     }
 }

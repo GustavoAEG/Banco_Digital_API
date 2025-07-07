@@ -1,26 +1,52 @@
 ﻿using ContaCorrente.Domain.Repositories;
 using MediatR;
+using Microsoft.AspNetCore.Http;
+using System.Security.Claims;
+using ContaCorrente.Application.Queries.GetSaldo;
 
 namespace ContaCorrente.Application.Queries.ConsultarSaldo
 {
-    public class ConsultarSaldoQueryHandler : IRequestHandler<ConsultarSaldoQuery, decimal>
+    public class ConsultarSaldoQueryHandler : IRequestHandler<ConsultarSaldoQuery, GetSaldoResult>
     {
-        private readonly IContaCorrenteRepository _repository;
+        private readonly IContaCorrenteRepository _contaRepository;
+        private readonly IMovimentoRepository _movimentoRepository;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public ConsultarSaldoQueryHandler(IContaCorrenteRepository repository)
+        public ConsultarSaldoQueryHandler(
+            IContaCorrenteRepository contaRepository,
+            IMovimentoRepository movimentoRepository,
+            IHttpContextAccessor httpContextAccessor)
         {
-            _repository = repository;
+            _contaRepository = contaRepository;
+            _movimentoRepository = movimentoRepository;
+            _httpContextAccessor = httpContextAccessor;
         }
 
-        public async Task<decimal> Handle(ConsultarSaldoQuery request, CancellationToken cancellationToken)
+        public async Task<GetSaldoResult> Handle(ConsultarSaldoQuery request, CancellationToken cancellationToken)
         {
-            var conta = await _repository.ObterContaPorCpfAsync(request.Cpf);
+            var cpf = _httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(cpf))
+                throw new UnauthorizedAccessException("Token inválido.");
 
-            if (conta == null)
-                throw new ArgumentException("Conta não encontrada.");
+            var conta = await _contaRepository.ObterContaPorCpfAsync(cpf)
+                        ?? throw new ArgumentException("Conta inválida.", "INVALID_ACCOUNT");
 
-            // Por enquanto retornando 0 como saldo fixo
-            return 0.0m;
+            if (!conta.Ativo)
+                throw new ArgumentException("Conta inativa.", "INACTIVE_ACCOUNT");
+
+            var movimentos = await _movimentoRepository.ObterMovimentosPorContaAsync(conta.Id);
+
+            var creditos = movimentos.Where(m => m.TipoMovimento == "C").Sum(m => m.Valor);
+            var debitos = movimentos.Where(m => m.TipoMovimento == "D").Sum(m => m.Valor);
+            var saldo = creditos - debitos;
+
+            return new GetSaldoResult
+            {
+                NumeroConta = conta.Numero,
+                NomeTitular = conta.Nome,
+                DataHoraConsulta = DateTime.UtcNow,
+                SaldoAtual = saldo
+            };
         }
     }
 }

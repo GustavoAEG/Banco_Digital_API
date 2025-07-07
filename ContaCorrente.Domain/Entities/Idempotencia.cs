@@ -4,9 +4,9 @@ namespace ContaCorrente.Domain.Entities
 {
     public class Idempotencia
     {
-        public string ChaveIdempotencia { get; private set; } = string.Empty;
-        public string? Requisicao { get; private set; }
-        public string? Resultado { get; private set; }
+        public string ChaveIdempotencia { get; set; } = string.Empty;
+        public string? Requisicao { get; set; }
+        public string? Resultado { get; set; }
 
         public Idempotencia(string chaveIdempotencia, string? requisicao, string? resultado)
         {
@@ -15,6 +15,6 @@ namespace ContaCorrente.Domain.Entities
             Resultado = resultado;
         }
 
-        private Idempotencia() { }
+        public Idempotencia() { }
     }
 }

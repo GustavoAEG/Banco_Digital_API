@@ -74,6 +74,9 @@ builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddScoped<IMovimentoRepository, MovimentoRepository>();
 
+builder.Services.AddScoped<IIdempotenciaRepository, IdempotenciaRepository>();
+
+
 var app = builder.Build();
 
 // Swagger UI

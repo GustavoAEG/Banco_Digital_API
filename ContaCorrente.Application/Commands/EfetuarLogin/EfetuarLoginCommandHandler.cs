@@ -2,6 +2,8 @@
 using ContaCorrente.Application.Commands;
 using MediatR;
 using ContaCorrente.Application.Services;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace ContaCorrente.Application.Commands.EfetuarLogin;
 
@@ -22,8 +24,13 @@ public class EfetuarLoginCommandHandler : IRequestHandler<EfetuarLoginCommand, E
             ? await _contaRepository.ObterContaPorCpfAsync(request.Cpf)
             : await _contaRepository.ObterContaPorNumeroAsync(request.NumeroConta.ToString());
 
-        if (conta == null || conta.Senha != request.Senha) // Aqui seria melhor usar hash de senha
-            throw new UnauthorizedAccessException("E-mail ou senha inválidos. Tipo de falha: USER_UNAUTHORIZED");
+        if (conta == null)
+            throw new UnauthorizedAccessException("Conta não encontrada.");
+
+        string senhaHash = GerarHashSenha(request.Senha, conta.Salt);
+
+        if (conta.Senha != senhaHash)
+            throw new UnauthorizedAccessException("Senha inválida. Tipo de falha: USER_UNAUTHORIZED");
 
         var token = _tokenService.GerarToken(conta);
 
@@ -31,5 +38,13 @@ public class EfetuarLoginCommandHandler : IRequestHandler<EfetuarLoginCommand, E
         {
             Token = token
         };
+    }
+
+    private string GerarHashSenha(string senha, string salt)
+    {
+        using var sha256 = SHA256.Create();
+        var bytes = Encoding.UTF8.GetBytes(senha + salt);
+        var hash = sha256.ComputeHash(bytes);
+        return Convert.ToBase64String(hash);
     }
 }
